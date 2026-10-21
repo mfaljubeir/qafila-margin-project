@@ -36,7 +36,30 @@ def ingest(data_dir: Path, db: Path) -> None:
     """
     with duckdb.connect(str(db)) as con:  # closes the file before dbt opens it
         con.sql("CREATE SCHEMA IF NOT EXISTS raw")
-        raise NotImplementedError("Step 1: load the sources into the raw schema")
+
+        sqlite_file = data_dir / "qafila_oltp.sqlite"
+
+        for table in ("orders", "order_items", "products", "stores"):
+            con.execute(f"""
+                CREATE OR REPLACE TABLE raw.{table} AS
+                SELECT * FROM sqlite_scan('{sqlite_file}', '{table}')
+            """)
+
+        supplier_files = sorted((data_dir / "suppliers").glob("prices_*.csv"))
+
+        if not supplier_files:
+            raise FileNotFoundError("No supplier price files found")
+
+        con.execute("""
+            CREATE OR REPLACE TABLE raw.supplier_prices AS
+            SELECT *
+            FROM read_csv_auto(
+                ?,
+                union_by_name = true,
+                filename = true
+            )
+        """, [[str(path) for path in supplier_files]])
+
 
 
 def transform(db: Path) -> None:
@@ -52,16 +75,59 @@ def transform(db: Path) -> None:
 
 
 def publish(db: Path, warehouse: Path) -> None:
-    """Step 5: publish three dbt models to Iceberg (see the brief for the exact columns).
+    """Publish dbt results to Iceberg while preserving table history."""
+    import pyarrow as pa
 
-        silver.product_cost_history   gold.weekly_margin   quality.price_quarantine
-
-    Update existing tables in place, never drop and recreate them: the table's snapshots are
-    how we see what a number was before the supplier's correction arrived.
-    """
     catalog = get_catalog(warehouse)
-    raise NotImplementedError("Step 5: publish the models to Iceberg")
 
+    models = [
+        ("silver", "product_cost_history"),
+        ("gold", "weekly_margin"),
+        ("quality", "price_quarantine"),
+    ]
+
+    with duckdb.connect(str(db), read_only=True) as con:
+        for namespace, name in models:
+            identifier = (namespace, name)
+
+            # Read the dbt model from DuckDB.
+            data = con.execute(
+                f'SELECT * FROM "{namespace}"."{name}"'
+            ).fetch_arrow_table()
+
+            # Create the namespace if this is the first run.
+            if namespace not in {
+                ns[0] for ns in catalog.list_namespaces()
+            }:
+                catalog.create_namespace(namespace)
+
+            if not catalog.table_exists(identifier):
+                # First run: create the Iceberg table.
+                catalog.create_table(
+                    identifier=identifier,
+                    schema=data.schema,
+                )
+                table = catalog.load_table(identifier)
+                table.append(data)
+                print(f"Created {namespace}.{name}")
+            else:
+                table = catalog.load_table(identifier)
+
+                # Compare rows without relying on their order.
+                old_data = table.scan().to_arrow()
+
+                def sorted_rows(arrow_table):
+                    return sorted(
+                        repr(row)
+                        for row in arrow_table.to_pylist()
+                    )
+
+                if sorted_rows(old_data) == sorted_rows(data):
+                    print(f"Unchanged {namespace}.{name}")
+                else:
+                    # Overwrite creates a new snapshot.
+                    table.overwrite(data)
+                    print(f"Updated {namespace}.{name}")
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])

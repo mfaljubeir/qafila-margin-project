@@ -73,4 +73,4 @@ With 100× more data, full-table comparisons and overwrites would become expensi
 
 ## AI assistance
 
-I used ChatGPT to help understand the requirements, work through the Python and SQL implementation, and troubleshoot dbt and Iceberg errors. I ran the pipeline and tests in Colab and checked the results.
+I used ChatGPT to help understand the requirements, troubleshoot dbt and Iceberg errors 

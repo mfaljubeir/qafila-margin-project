@@ -55,6 +55,18 @@ A test correction increased one supplier cost by SAR 1. The original gold snapsh
 
 The temporary correction file was removed after testing.
 
+I also tested with seed 11 using a separate data directory and warehouse.
+The checker passed 22/22 checks, and all 10 dbt tests passed.
+Running the same pipeline again left all three Iceberg tables unchanged.
+
+For seed 11, I tested a supplier correction that increased one cost
+from SAR 9.97 to SAR 10.97. The original gold snapshot
+`8713210089906842885` had total margin of SAR 748,231.25.
+After correction, snapshot `4882154044542120267` had total
+margin of SAR 748,172.25, a decrease of SAR 59.
+The original snapshot remained readable.
+The temporary correction file was removed.
+
 ## What I'd do next
 
 With 100× more data, full-table comparisons and overwrites would become expensive. I would look into incremental processing. Daily supplier files would also need more frequent validation and checks for overlapping cost periods.

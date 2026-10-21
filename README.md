@@ -30,11 +30,12 @@ SQLite and supplier CSVs → DuckDB raw tables → dbt staging views → silver,
 ## Data problems I found
 
 | Problem | Where | Rows affected | What I did |
-|---|---|---|---|
+|---|---|---:|---|
 | Invalid supplier costs | Supplier CSVs | 4 | Quarantined with `invalid_cost` |
 | Unknown product SKUs | Supplier CSVs | 3 | Quarantined with `unknown_sku` |
-| Supplier column name changes | Week 39 CSV | 160 | Read `unit_cost` and `cost_sar` into one normalized cost field |
-| Different cost number formats | Supplier prices | 160 (126 decimal commas, 34 Arabic-formatted costs) | Normalized commas and Arabic decimal digits before conversion |
+| Supplier column name changes | `prices_2026-W39.csv` | 160 | Read `cost_sar` as the cost field alongside `unit_cost` from earlier files |
+| Decimal commas | `prices_2026-W38.csv` | 126 | Normalized decimal commas before conversion |
+| Arabic digits or decimal mark | `prices_2026-W38.csv` | 34 | Normalized Arabic digits and decimal mark before conversion |
 
 ## Tests
 
@@ -49,23 +50,22 @@ All 10 dbt tests passed. The provided checker passed 22/22 checks.
 
 ## Re-runs and the correction
 
-Running the pipeline twice with unchanged data left all three Iceberg tables unchanged.
+Running the pipeline twice with unchanged inputs did not create new Iceberg snapshots.
 
-A test correction increased one supplier cost by SAR 1. The original gold snapshot was `5576987117744296487`, with total margin of SAR 801,016.88. After the correction, snapshot `8540595361163887495` had total margin of SAR 800,967.88, a decrease of SAR 49. The earlier snapshot remained readable.
+I tested the official correction file, `prices_2026-W39_fix.csv`, containing nine supplier price corrections. The pipeline updated the affected cost history and weekly margin tables while preserving previous Iceberg snapshots.
 
-The temporary correction file was removed after testing.
+**Correction validation:**
 
-I also tested with seed 11 using a separate data directory and warehouse.
-The checker passed 22/22 checks, and all 10 dbt tests passed.
-Running the same pipeline again left all three Iceberg tables unchanged.
+- Gross margin before correction: SAR 801,016.88
+- Gross margin after correction: SAR 803,515.80
+- Gross margin change: +SAR 2,498.92
+- Independently calculated expected change: +SAR 2,498.92
+- Difference between expected and actual change: SAR 0.00
+- Revenue, costed revenue, and uncosted line counts remained unchanged.
 
-For seed 11, I tested a supplier correction that increased one cost
-from SAR 9.97 to SAR 10.97. The original gold snapshot
-`8713210089906842885` had total margin of SAR 748,231.25.
-After correction, snapshot `4882154044542120267` had total
-margin of SAR 748,172.25, a decrease of SAR 59.
-The original snapshot remained readable.
-The temporary correction file was removed.
+The previous Iceberg snapshot remained readable after the correction, demonstrating time travel.
+
+I also tested the pipeline with a second generated seed, including re-runs and correction handling.
 
 ## What I'd do next
 

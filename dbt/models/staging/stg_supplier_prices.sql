@@ -2,7 +2,7 @@ with source as (
     select
         supplier_id,
         trim(sku) as sku,
-        valid_from,
+        cast(valid_from as date) as valid_from,
         parse_filename(filename) as source_file,
         coalesce(
             cast(unit_cost as varchar),

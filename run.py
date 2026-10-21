@@ -56,6 +56,7 @@ def ingest(data_dir: Path, db: Path) -> None:
             FROM read_csv_auto(
                 ?,
                 union_by_name = true,
+                all_varchar = true,
                 filename = true
             )
         """, [[str(path) for path in supplier_files]])

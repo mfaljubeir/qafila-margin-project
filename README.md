@@ -34,7 +34,7 @@ SQLite and supplier CSVs → DuckDB raw tables → dbt staging views → silver,
 | Invalid supplier costs | Supplier CSVs | 4 | Quarantined with `invalid_cost` |
 | Unknown product SKUs | Supplier CSVs | 3 | Quarantined with `unknown_sku` |
 | Supplier column name changes | Week 39 CSV | 160 | Read `unit_cost` and `cost_sar` into one normalized cost field |
-| Different cost number formats | Supplier prices | Varies | Normalized commas and Arabic decimal digits before conversion |
+| Different cost number formats | Supplier prices | 160 (126 decimal commas, 34 Arabic-formatted costs) | Normalized commas and Arabic decimal digits before conversion |
 
 ## Tests
 

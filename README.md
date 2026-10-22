@@ -67,6 +67,43 @@ The previous Iceberg snapshot remained readable after the correction, demonstrat
 
 I also tested the pipeline with a second generated seed, including re-runs and correction handling.
 
+## Validation Evidence
+
+The project was validated using a fresh clone, unchanged re-runs,
+the official W39 correction file, and a second generated seed.
+
+| Validation | Observed result |
+|---|---|
+| Fresh pipeline execution | Successful |
+| dbt build | 5 models and 10 tests passed (15/15) |
+| Provided checker | 22/22 checks passed |
+| Initial Iceberg output | 633 cost history rows, 165 margin rows, 7 quarantined rows |
+| Unchanged re-run | Tables unchanged; no new Iceberg snapshots |
+| Official W39 correction | 9 corrected supplier prices processed |
+| Corrected Iceberg output | 637 cost history rows, 165 margin rows, 7 quarantined rows |
+| Correction margin impact | +SAR 2,498.92 |
+| Independent correction calculation | +SAR 2,498.92; difference SAR 0.00 |
+| Iceberg time travel | Previous gold snapshot remained readable |
+| Second generated seed | Re-runs and correction handling tested |
+
+### Independent correction reconciliation
+
+| Metric | Before correction | After correction | Change |
+|---|---:|---:|---:|
+| Margin rows | 165 | 165 | 0 |
+| Revenue (SAR) | 3,504,002.19 | 3,504,002.19 | 0.00 |
+| Costed revenue (SAR) | 2,455,216.86 | 2,455,216.86 | 0.00 |
+| Cost (SAR) | 1,654,199.98 | 1,651,701.06 | -2,498.92 |
+| Gross margin (SAR) | 801,016.88 | 803,515.80 | +2,498.92 |
+| Uncosted lines | 20,626 | 20,626 | 0 |
+
+The margin change was independently calculated from eligible
+delivered order lines using Riyadh-local dates and effective
+supplier costs. The expected and actual changes matched exactly.
+
+These results describe the tested datasets and do not claim
+coverage of unseen grader cases.
+
 ## What I'd do next
 
 With 100× more data, full-table comparisons and overwrites would become expensive. I would look into incremental processing. Daily supplier files would also need more frequent validation and checks for overlapping cost periods.

@@ -208,7 +208,66 @@ Observed results:
 This confirms that an unchanged re-run after the supplier
 correction did not rewrite the three Iceberg tables.
 
+## 8. Independent Gold reconciliation
+
+An independent Python validator was implemented in
+`tools/reconcile_gold.py`.
+
+Unlike the dbt tests, this validator reads the original
+SQLite and supplier CSV inputs directly, reconstructs
+effective supplier costs, calculates the Gold reporting
+metrics, and compares them with the published Iceberg table.
+
+Run:
+
+```bash
+uv run python tools/reconcile_gold.py
+```
+
+### Supplier-correction dataset
+
+Observed results:
+- Expected reporting groups: **165**.
+- Actual Iceberg Gold groups: **165**.
+- Financial metric mismatches: **0**.
+- Duplicate reporting groups: **none detected**.
+- Result: **PASS**.
+
+The validator compares line counts, total revenue,
+costed revenue, total cost, gross margin, and uncosted
+line counts at each reporting grain.
+
+### Negative test
+
+A temporary test injected a SAR 1.00 discrepancy into
+the independently calculated revenue of one group,
+without modifying the pipeline or Iceberg data.
+
+Observed results:
+- Detected mismatches: **1**.
+- Field: `revenue_sar`.
+- Expected failure exit code: **1**.
+
+This confirms the validator detects an intentional
+financial discrepancy instead of silently passing.
+
 ## Scope of evidence
 
 These are observed results from the validation runs.
 They do not guarantee performance on unseen grader data.
+
+### Baseline dataset independent reconciliation
+
+The default dataset was generated in a separate directory,
+then processed using an isolated Iceberg warehouse.
+
+All three commands completed with exit code 0:
+
+```bash
+uv run python tools/make_data.py --out /content/qafila-base-validation-data
+uv run python run.py --data-dir /content/qafila-base-validation-data --warehouse /content/qafila-base-validation-warehouse
+uv run python tools/reconcile_gold.py --data-dir /content/qafila-base-validation-data --warehouse /content/qafila-base-validation-warehouse
+```
+
+Result: **PASS**. The baseline validation did not modify
+the supplier-correction warehouse.

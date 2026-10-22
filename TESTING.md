@@ -91,12 +91,31 @@ correction and retained the pre-correction margin.
 
 ## 6. Second generated seed
 
-The pipeline was also tested using a second generated
-seed, including unchanged re-runs and a supplier
-cost correction.
+The pipeline was also validated with seed 11, independently
+of the default generated dataset.
 
-This was a separate validation experiment, not part
-of the primary baseline and official correction results.
+Generate the alternate dataset:
+
+```bash
+uv run python tools/make_data.py --seed 11 --out data_seed11
+```
+
+The alternate data must be processed using a separate input
+path and Iceberg warehouse/catalog configuration. Do not
+run the standard pipeline against its default warehouse
+without first isolating the test environment.
+
+Observed results from the earlier seed-11 validation:
+- The pipeline completed successfully.
+- An unchanged re-run did not introduce new snapshots.
+- A supplier cost correction was processed.
+- A +SAR 1.00 cost change for an eligible SKU resulted
+  in a SAR 59.00 decrease in gross margin.
+- The previous Iceberg snapshot remained readable.
+
+These observations are recorded from the earlier test.
+They are not a claim that the commands above alone
+execute the full isolated seed-11 pipeline.
 
 ## Scope of evidence
 

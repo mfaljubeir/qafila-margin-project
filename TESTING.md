@@ -271,3 +271,43 @@ uv run python tools/reconcile_gold.py --data-dir /content/qafila-base-validation
 
 Result: **PASS**. The baseline validation did not modify
 the supplier-correction warehouse.
+
+## 9. SCD2 and Gold financial consistency tests
+
+Two additional dbt singular tests were implemented.
+
+### SCD2 interval integrity
+
+File: `dbt/tests/assert_cost_history_intervals.sql`
+
+Validates that each cost version has valid date boundaries,
+that its end date matches the next version's start date,
+and that only the final version for each SKU is current.
+
+Observed result: **PASS**.
+
+### Gold financial consistency
+
+File: `dbt/tests/assert_weekly_margin_consistency.sql`
+
+Validates non-null financial metrics, valid uncosted-line
+counts, and the relationship:
+
+`margin_sar = costed_revenue_sar - cost_sar`
+
+with a SAR 0.01 tolerance.
+
+Observed result: **PASS**.
+
+### Full verification after both additions
+
+Observed results:
+- dbt build: **5 models and 14 tests passed (19/19)**.
+- dbt warnings: **0**.
+- dbt errors: **0**.
+- Full pipeline: **exit code 0**.
+- Official checker: **exit code 0**.
+- Independent Gold reconciliation: **exit code 0**.
+
+These results apply to the tested dataset. Earlier sections
+preserve the historical results from previous validation runs.

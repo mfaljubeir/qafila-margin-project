@@ -156,3 +156,21 @@ I used ChatGPT to help interpret the assignment requirements,
 troubleshoot dbt and Iceberg issues, develop additional
 validation tests, and organize the documentation.
 I ran the pipeline and reviewed the observed test results.
+
+## Latest quality validation — 14 dbt tests
+
+Two additional singular tests strengthen the data model:
+
+- `assert_cost_history_intervals`: verifies contiguous SCD2 cost
+  periods, valid boundaries, and correct current-version flags.
+- `assert_weekly_margin_consistency`: verifies Gold margin arithmetic,
+  non-null financial metrics, and valid uncosted-line counts.
+
+Latest observed results:
+- Full dbt build: **5 models and 14 tests passed (19/19)**.
+- Full pipeline execution: **PASS (exit code 0)**.
+- Official checker: **PASS (exit code 0)**.
+- Independent Gold reconciliation: **PASS (exit code 0)**.
+
+Earlier validation results remain documented above as historical
+evidence. See `TESTING.md` for additional details.

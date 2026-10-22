@@ -45,8 +45,10 @@ SQLite and supplier CSVs → DuckDB raw tables → dbt staging views → silver,
 | Accepted quarantine reasons | Price quarantine | Unexpected rejection reasons |
 | No duplicate SKU/date versions | Cost history | Duplicate SCD2 versions |
 | No unchanged consecutive costs | Cost history | Unnecessary SCD2 versions |
+| Gold reporting grain uniqueness | Weekly margin | Duplicate week/city/category groups |
+| Source-to-Gold reconciliation | Weekly margin | Incorrect line counts or revenue totals |
 
-All 10 dbt tests passed. The provided checker passed 22/22 checks.
+All 12 dbt tests passed. The provided checker passed 22/22 checks.
 
 ## Re-runs and the correction
 
@@ -77,7 +79,7 @@ the official W39 correction file, and a second generated seed.
 | Validation | Observed result |
 |---|---|
 | Fresh pipeline execution | Successful |
-| dbt build | 5 models and 10 tests passed (15/15) |
+| dbt build | 5 models and 12 tests passed (17/17) |
 | Provided checker | 22/22 checks passed |
 | Initial Iceberg output | 633 cost history rows, 165 margin rows, 7 quarantined rows |
 | Unchanged re-run | Tables unchanged; no new Iceberg snapshots |
@@ -123,6 +125,30 @@ Both additional Gold-model tests passed:
 An unchanged pipeline re-run left all three Iceberg tables
 unchanged. See [TESTING.md](TESTING.md) for detailed
 validation steps and observed results.
+
+### Independent Gold reconciliation
+
+The project includes `tools/reconcile_gold.py`, an independent
+Python validator that reads the original SQLite and supplier
+CSV files, reconstructs effective supplier costs, and compares
+the calculated financial metrics against published Iceberg Gold.
+
+```bash
+uv run python tools/reconcile_gold.py
+```
+
+Validation evidence:
+
+- Corrected dataset: **165 expected groups, 165 actual groups,
+  zero financial mismatches**.
+- Baseline dataset: independent reconciliation completed successfully.
+- Negative test: an intentionally injected **SAR 1.00** revenue
+  discrepancy was detected, and the validator exited with code 1.
+- Duplicate reporting groups are explicitly rejected.
+
+The validator checks line counts, revenue, costed revenue, cost,
+gross margin, and uncosted line counts. These results apply to
+the tested datasets, not unseen grader inputs.
 
 ## AI assistance
 

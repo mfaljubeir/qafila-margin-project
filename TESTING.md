@@ -117,6 +117,55 @@ These observations are recorded from the earlier test.
 They are not a claim that the commands above alone
 execute the full isolated seed-11 pipeline.
 
+## 7. Additional dbt quality tests
+
+Two additional singular dbt tests were implemented to
+strengthen validation of the Gold reporting model.
+
+### Weekly margin grain uniqueness
+
+Test: `dbt/tests/assert_weekly_margin_unique_grain.sql`
+
+Checks that each combination of `iso_week`, `city`, and
+`category` appears only once in `weekly_margin`.
+
+Observed result: **PASS**.
+
+### Source-to-Gold reconciliation
+
+Test: `dbt/tests/assert_weekly_margin_source_reconciliation.sql`
+
+Independently aggregates eligible source order items and
+compares their line counts and rounded revenue against
+`weekly_margin` at the reporting grain.
+
+The test detects missing or extra reporting groups,
+line-count mismatches, and revenue mismatches.
+
+Observed result: **PASS**.
+
+### Full pipeline verification
+
+After adding both tests, the pipeline was executed again:
+
+```bash
+uv run python run.py
+uv run python tools/check.py
+```
+
+Observed results:
+- dbt: **5 models and 12 tests passed (17/17)**.
+- Official checker: **22/22 checks passed**.
+- `silver.product_cost_history`: unchanged.
+- `gold.weekly_margin`: unchanged.
+- `quality.price_quarantine`: unchanged.
+- No new Iceberg snapshots were created during the
+  unchanged re-run.
+
+These results were observed on the default generated dataset.
+The additional tests have not yet been separately validated
+against the official correction dataset.
+
 ## Scope of evidence
 
 These are observed results from the validation runs.

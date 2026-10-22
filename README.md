@@ -110,6 +110,23 @@ coverage of unseen grader cases.
 
 With 100× more data, full-table comparisons and overwrites would become expensive. I would look into incremental processing. Daily supplier files would also need more frequent validation and checks for overlapping cost periods.
 
+## Latest validation (12 dbt tests)
+
+The latest default-data run passed **12/12 dbt tests**
+and **22/22 official checker checks**.
+
+Both additional Gold-model tests passed:
+
+- Weekly margin grain uniqueness.
+- Source-to-Gold line-count and revenue reconciliation.
+
+An unchanged pipeline re-run left all three Iceberg tables
+unchanged. See [TESTING.md](TESTING.md) for detailed
+validation steps and observed results.
+
 ## AI assistance
 
-I used ChatGPT to help understand the requirements, troubleshoot dbt and Iceberg errors 
+I used ChatGPT to help interpret the assignment requirements,
+troubleshoot dbt and Iceberg issues, develop additional
+validation tests, and organize the documentation.
+I ran the pipeline and reviewed the observed test results.

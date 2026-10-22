@@ -163,8 +163,50 @@ Observed results:
   unchanged re-run.
 
 These results were observed on the default generated dataset.
-The additional tests have not yet been separately validated
-against the official correction dataset.
+
+### Revalidation after supplier correction
+
+The official supplier correction file was generated using:
+
+```bash
+uv run python tools/make_data.py --add-correction
+```
+
+The pipeline and checker were then executed:
+
+```bash
+uv run python run.py
+uv run python tools/check.py
+```
+
+Observed results:
+- dbt: **5 models and 12 tests passed (17/17)**.
+- Official checker: **22/22 checks passed**.
+- Both additional Gold-model tests: **PASS**.
+- `silver.product_cost_history`: **637 rows**.
+- `gold.weekly_margin`: **165 rows**.
+- `quality.price_quarantine`: **7 rows**.
+- Silver and Gold Iceberg tables were updated.
+
+This confirms the additional tests also passed on the
+supplier-correction dataset.
+
+
+### Idempotency after supplier correction
+
+The pipeline and official checker were run again without
+changing the corrected input data.
+
+Observed results:
+- dbt: **17/17 passed**, including all 12 data tests.
+- Official checker: **22/22 passed**.
+- `silver.product_cost_history`: **Unchanged**.
+- `gold.weekly_margin`: **Unchanged**.
+- `quality.price_quarantine`: **Unchanged**.
+- Gold Iceberg snapshot count remained at **3**.
+
+This confirms that an unchanged re-run after the supplier
+correction did not rewrite the three Iceberg tables.
 
 ## Scope of evidence
 

@@ -69,6 +69,8 @@ I also tested the pipeline with a second generated seed, including re-runs and c
 
 ## Validation Evidence
 
+For detailed testing steps and results, see [TESTING.md](TESTING.md).
+
 The project was validated using a fresh clone, unchanged re-runs,
 the official W39 correction file, and a second generated seed.
 
